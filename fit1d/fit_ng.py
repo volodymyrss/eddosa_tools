@@ -298,7 +298,6 @@ class Fit1Dglobal(Fit1D):
 
         print "saving",xcm_filename
 
-        self.xcm=da.DataFile(xcm_filename)
         f=open(xcm_filename,"w")
         f.write(self.xcm_header)
 
@@ -311,6 +310,7 @@ class Fit1Dglobal(Fit1D):
 
                 f.write((" ".join(["%.5lg"%v for v in parameter.values]))+"\n")
         f.close()
+        self.xcm=da.DataFile(xcm_filename)
 
 class Fit1DglobalLines(Fit1Dglobal):
     version="v3"
@@ -331,12 +331,14 @@ class Fit1DglobalLines(Fit1Dglobal):
     def estimate_parameters(self):
 
         #self.M.isgribackground.offset="0.0 -1"
-        #self.M.isgribackground.offset="0.0 -1"
         self.M.isgribackground.offset.frozen=True
         self.M.isgribackground.gain.frozen=True
         self.gain=self.M.isgribackground.gain.values[0]
+        
+        #self.M.isgribackground.shiftc1="0 -1 -20 -20 20 20"
+        self.M.isgribackground.gain2="0.0 -1"
+        #self.M.isgribackground.fractionc2="0 -1"
         #self.M.isgribackground.gain="1.0 -1"
-        #self.M.isgribackground.gain2="0.0 -1"
 
         self.fit()
 
@@ -351,7 +353,7 @@ class Fit1DglobalLines(Fit1Dglobal):
         self.M.isgribackground.shift6="0 0.001 -5 -5 5 5"
         self.M.isgribackground.shiftc1="0 0.001 -20 -20 20 20"
         self.M.isgribackground.shiftc2="0 -1 -20 -20 20 20"
-        self.M.isgribackground.shift511="0 0.001 -20 -20 20 20"
+        self.M.isgribackground.shift511="0 0.001 -50 -50 50 50"
         self.M.isgribackground.fraction1="1 0.001"
         self.M.isgribackground.fraction2="1 0.001"
         self.M.isgribackground.fraction3="1 0.001"
@@ -366,11 +368,15 @@ class Fit1DglobalLines(Fit1Dglobal):
         Fit.error("maximum 100 27-35")
 
         line_tags=["1","2","3","4","5","6","c1","c2","511"]
+        
+        gain=self.M.isgribackground.gain.values[0]
+        offset=self.M.isgribackground.offset.values[0]
 
         f=open("lines.txt","w")
         for lt,lref in zip(line_tags,self.lines_table):
+            lsh=getattr(self.M.isgribackground,'shift'+lt).values[0]
             er=getattr(self.M.isgribackground,'shift'+lt).error
-            f.write("%.5lg %.5lg %.5lg\n"%(lref,er[0],er[1]))
+            f.write("%.5lg %.5lg %.5lg %.5lg %.5lg %.5lg\n"%(lref,lsh,er[0],er[1],gain,offset))
 
 class Fit1Dnear511keV(Fit1D):
     def save(self):

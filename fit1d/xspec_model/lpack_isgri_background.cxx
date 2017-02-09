@@ -8,7 +8,6 @@
 
 #include  "isgri_backgroundFunctionMap.h"
 #include  <XSModelFunction.h>
-#include "stdlib.h"
 
 extern "C" int Isgri_background_Init(Tcl_Interp* tclInterp);
 extern "C" int Isgri_background_SafeInit(Tcl_Interp* tclInterp);
@@ -25,11 +24,8 @@ int Isgri_background_SafeInit(Tcl_Interp* tclInterp)
         char VERSION[] = "1.0";
         Tcl_PkgProvide(tclInterp, PACKAGE, VERSION);
         createisgri_backgroundFunctionMap();
-
-        char datpath[255];
-        sprintf(datpath,"%s/isgri_background.dat",getenv("XSPECMODEL_ISGRIBACKGROUND"));
         XSModelFunction::updateComponentList
-              (datpath);
+              ("/sps/integral/analysis/savchenk/eddosa/eddosa_tools/fit1d/xspec_model/isgri_background.dat");
         return TCL_OK;
 
 }

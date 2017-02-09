@@ -172,8 +172,11 @@ void K_Lines_model ( double Chan,const RealArray a,double * y,int na ) // not on
     for ( i=2;i<N_GAUSS;i++ )
         N[i]=line_fractions[i-1];
 
- /*   for (i=0;i<N_GAUSS;i++)
-     printf("Sigma=%lg N=%lg; En=%lg\n",Sigma[i],N[i],K_En[i]);*/
+    for (i=0;i<N_GAUSS;i++) {
+        if (fabs(E-K_En[i])<Sigma[i]/5.) { 
+            //printf("at %lg sigma %lg or %.5lg %% FWHM N %lg\n",K_En[i],Sigma[i],Sigma[i]/K_En[i]*100.*2.35,N[i]);
+        }
+    }
 
     //waitkey();
     /*----------------------------------------
