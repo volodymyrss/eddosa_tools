@@ -1,5 +1,6 @@
 from numpy import *
-import scipy,pyfits
+import scipy
+import astropy.io.fits as pyfits
 import time
 from scipy.special import erf
 import sys
