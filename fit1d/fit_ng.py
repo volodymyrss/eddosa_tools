@@ -1,7 +1,10 @@
 #!/usr/bin/python
 
-from xspec import *
-import xspec
+try:
+    from xspec import *
+    import xspec
+except:
+    pass
 
 import os
 import glob
