@@ -24,8 +24,12 @@ int Isgri_background_SafeInit(Tcl_Interp* tclInterp)
         char VERSION[] = "1.0";
         Tcl_PkgProvide(tclInterp, PACKAGE, VERSION);
         createisgri_backgroundFunctionMap();
+
+        char modeldat[255];
+        snprintf(modeldat,255,"%s/isgri_background.dat",getenv("XSPECMODEL_ISGRIBACKGROUND") );
+
         XSModelFunction::updateComponentList
-              ("/sps/integral/analysis/savchenk/eddosa/eddosa_tools/fit1d/xspec_model/isgri_background.dat");
+              (modeldat);
         return TCL_OK;
 
 }

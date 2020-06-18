@@ -8,14 +8,14 @@ except:
 
 import os
 import glob
-import cPickle
+import pickle
 import dataanalysis as da
 
 meroot=os.path.dirname(os.path.realpath(__file__))
 
 def list_ht():
     ht=glob.glob(meroot+"/xspec_model/humantouch/*")
-    print meroot+"/xspec_model/humantouch/*",ht
+    print(meroot+"/xspec_model/humantouch/*",ht)
     return ht
 
 #print "isgri_background",meroot+"/xspec_model"
@@ -70,7 +70,7 @@ class Fit1D(da.DataAnalysis):
         fn=self.input_spectrum.get_spectrum().get_path()
         self.S=Spectrum(fn)
 
-        print "loading",fn
+        print("loading",fn)
         #self.S.response=
 
     def select_range(self):
@@ -97,13 +97,13 @@ class Fit1D(da.DataAnalysis):
         model_dict['components']={}
 
         for comp_name in M.componentNames:
-            print "component:",comp_name
+            print("component:",comp_name)
             model_dict['components'][comp_name]={}
             comp=getattr(M,comp_name)
             for par_name in comp.parameterNames:
                 par=getattr(comp,par_name)
-                print "parameter:",par_name
-                print "--- ",par.values
+                print("parameter:",par_name)
+                print("--- ",par.values)
                 model_dict['components'][comp_name][par_name]=list(par.values)+list(par.error)
 
         import json
@@ -114,7 +114,7 @@ class Fit1D(da.DataAnalysis):
         self.explicit_output=['fitresults']
 
     def save_plots(self):
-        print "plotting"
+        print("plotting")
 
         Plot.xAxis = "keV"
         Plot.device = "/cps"
@@ -147,12 +147,12 @@ class Fit1D(da.DataAnalysis):
         gain=bkgfit['gain'][0]
         gain2=bkgfit['gain2'][0]
 
-        print "fit parameters:",offset,gain,gain2
+        print("fit parameters:",offset,gain,gain2)
         offset=offset+gain*energies[0]-energies[0]
 
         E_func=lambda Chan: ((Chan-offset-energies[0])/gain+energies[0] + gain2*((Chan-offset-energies[0])/(energies[-1]-energies[0]))**2)
         
-        print "for channel",chan,"energy",E_func(chan)
+        print("for channel",chan,"energy",E_func(chan))
         
         return E_func(chan)
 
@@ -165,7 +165,7 @@ class Fit1Dnear60keV(Fit1D):
 
         Fit.error("maximum 100 3 4 6 9")
 
-        print Fit.statistic/Fit.dof
+        print(Fit.statistic/Fit.dof)
 
         sig=float(M.gaussian.Sigma),M.gaussian.Sigma.error
 
@@ -174,7 +174,7 @@ class Fit1Dnear60keV(Fit1D):
         le2=float(M.gaussian_4.LineE),M.gaussian_4.LineE.error
         le3=float(M.gaussian_5.LineE),M.gaussian_5.LineE.error
 
-        print sig,le,le1,le2,le3
+        print(sig,le,le1,le2,le3)
             
         allres+=str(dict(le=le,sig=sig,le1=le1,le2=le2,le3=le3,chi2=Fit.statistic/Fit.dof))
         open("fitresults.txt","w").write(allres.replace(",",",\n"))
@@ -236,17 +236,17 @@ class Fit1Dglobal(Fit1D):
 
             e1,e2=40*gain-offset,800*gain-offset
 
-            print "e1,e2",e1,e2
+            print("e1,e2",e1,e2)
             self.S.ignore("**-%.5lg,%.5lg-**"%(e1,e2))
         else:
             self.S.ignore("**-35.,800.-**")
     
     def define_model(self):
-        print "isgri_background",meroot+"/xspec_model"
+        print("isgri_background",meroot+"/xspec_model")
 
         cwd=os.getcwd()
         os.chdir(meroot+"/xspec_model")
-        print "cwd:",os.getcwd()
+        print("cwd:",os.getcwd())
         xspec.AllModels.lmod("isgri_background",meroot+"/xspec_model") # move it
         os.chdir(cwd)
 
@@ -256,7 +256,7 @@ class Fit1Dglobal(Fit1D):
         if hasattr(self.input_bestguess,'parameters'):
             if self.override_parameters is None:
                 self.override_parameters={}
-            self.override_parameters=dict(self.override_parameters.items()+self.input_bestguess.parameters.items())
+            self.override_parameters=dict(list(self.override_parameters.items())+list(self.input_bestguess.parameters.items()))
         
         self.load_xcm(self.input_bestguess.xcm_filename)
                 
@@ -268,7 +268,7 @@ class Fit1Dglobal(Fit1D):
             if pars is None:
                 self.xcm_header+=l
             else:
-                pars.append(map(float,l.split()))
+                pars.append(list(map(float,l.split())))
     
             if l.startswith("model"):
                 pars=[]
@@ -276,38 +276,38 @@ class Fit1Dglobal(Fit1D):
         i=0
 
         for component_Name in self.M.componentNames:
-            print component_Name
+            print(component_Name)
             component=getattr(self.M,component_Name)
-            print dir(component)
+            print(dir(component))
             for parameter_Name in component.parameterNames:
                 parameter=getattr(component,parameter_Name)
 
                 if hasattr(self,'override_parameters') and self.override_parameters is not None and parameter_Name in self.override_parameters:
                     par_o=self.override_parameters[parameter_Name]
                 
-                    print "overriding",par_o,"to",pars[i]
+                    print("overriding",par_o,"to",pars[i])
                     if isinstance(par_o,float):
                         pars[i]=[par/pars[i][0]*par_o for par in pars[i]]
                     if isinstance(par_o,tuple): # should be good size
                         pars[i]=par_o
 
                 parameter.values=pars[i]     
-                print "setting   ",component_Name,parameter_Name
-                print "setting to",pars[i]
+                print("setting   ",component_Name,parameter_Name)
+                print("setting to",pars[i])
                 i+=1
         
     def save_xcm(self):
         xcm_filename="model.xcm"
 
-        print "saving",xcm_filename
+        print("saving",xcm_filename)
 
         f=open(xcm_filename,"w")
         f.write(self.xcm_header)
 
         for component_Name in self.M.componentNames:
-            print component_Name
+            print(component_Name)
             component=getattr(self.M,component_Name)
-            print dir(component)
+            print(dir(component))
             for parameter_Name in component.parameterNames:
                 parameter=getattr(component,parameter_Name)
 
@@ -324,9 +324,9 @@ class Fit1DglobalLines(Fit1Dglobal):
     
     def freeze_all(self):
         for component_Name in self.M.componentNames:
-            print component_Name
+            print(component_Name)
             component=getattr(self.M,component_Name)
-            print dir(component)
+            print(dir(component))
             for parameter_Name in component.parameterNames:
                 parameter=getattr(component,parameter_Name)
                 parameter.frozen=True

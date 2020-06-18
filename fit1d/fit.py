@@ -2,7 +2,7 @@
 
 from xspec import *
 import os
-import cPickle
+import pickle
 import aobj
 
 xspec.AllModels.lmod("isgri_background","/Integral/throng/savchenk/projects/integral/integral-analysis/osa10_group_13278/xspec_model/") # move it
@@ -47,16 +47,16 @@ class analysis(aobj.Persistent,aobj.Procedural):
         model_dict['components']={}
 
         for comp_name in M.componentNames:
-            print "component:",comp_name
+            print("component:",comp_name)
             model_dict['components'][comp_name]={}
             comp=getattr(M,comp_name)
             for par_name in comp.parameterNames:
                 par=getattr(comp,par_name)
-                print "parameter:",par_name
-                print "--- ",par.values
+                print("parameter:",par_name)
+                print("--- ",par.values)
                 model_dict['components'][comp_name][par_name]=list(par.values)+list(par.error)
 
-        cPickle.dump(model_dict,open("fitresults.pickle","w"))
+        pickle.dump(model_dict,open("fitresults.pickle","w"))
 
     @aobj.athostdir
     def save_plots(self):
@@ -89,7 +89,7 @@ class analysis_60keV(analysis):
 
         Fit.error("maximum 100 3 4 6 9")
 
-        print Fit.statistic/Fit.dof
+        print(Fit.statistic/Fit.dof)
 
         sig=float(M.gaussian.Sigma),M.gaussian.Sigma.error
 
@@ -98,7 +98,7 @@ class analysis_60keV(analysis):
         le2=float(M.gaussian_4.LineE),M.gaussian_4.LineE.error
         le3=float(M.gaussian_5.LineE),M.gaussian_5.LineE.error
 
-        print sig,le,le1,le2,le3
+        print(sig,le,le1,le2,le3)
             
         allres+=str(dict(le=le,sig=sig,le1=le1,le2=le2,le3=le3,chi2=Fit.statistic/Fit.dof))
         open("fitresults.txt","w").write(allres.replace(",",",\n"))

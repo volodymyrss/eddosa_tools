@@ -1,5 +1,6 @@
 from numpy import *
-import scipy,pyfits
+import scipy
+import astropy.io.fits as pyfits
 import time
 from scipy.special import erf
 import sys
@@ -275,7 +276,7 @@ class absorption:
 
     def read(self):
     # which one??
-        self.e,self.mur,self.muer=map(array,zip(*[map(float,(lambda x:x[-3:] if len(x)>3 else x)(l.split()))  for l in open(os.environ['EDDOSA_TOOLS_ROOT']+"/lut2model/python/resources/CdTe_abs.txt").readlines()[10:]]))
+        self.e,self.mur,self.muer=map(array,zip(*[map(float,(lambda x:x[-3:] if len(x)>3 else x)(l.split()))  for l in open(os.environ['EDDOSA_TOOLS_DIR']+"/lut2model/python/resources/CdTe_abs.txt").readlines()[10:]]))
         ktr=50/1000.
         self.muer[self.e<ktr]=(self.e/ktr)[self.e<ktr]**(-2)*self.muer[self.e>=ktr][0]
         self.mur[self.e<ktr]=(self.e/ktr)[self.e<ktr]**(-2)*self.mur[self.e>=ktr][0]
@@ -984,7 +985,12 @@ def make_lut2_v3(detector_model=None,resolution_step=1,nenergies=401,logenergies
     bip_energy=zeros((256,256))
     bip_gain=zeros((256,256))
 
-    emin,emax=(lambda x:(x['E_MIN'],x['E_MAX']))(pyfits.open(os.environ["INTEGRAL_DATA"]+"/resources/rmf_256bins.fits")['EBOUNDS'].data)
+    if 'ISGRI_RMF_256' in os.environ:
+        isgri_rmf=pyfits.open(os.environ["ISGRI_RMF_256"])
+    else:
+        isgri_rmf=pyfits.open(os.environ["INTEGRAL_DATA"]+"/resources/rmf_256bins.fits")
+
+    emin,emax=(lambda x:(x['E_MIN'],x['E_MAX']))(isgri_rmf['EBOUNDS'].data)
     energies=(emin+emax)/2.
     denergies=(emax-emin)/2.
 
