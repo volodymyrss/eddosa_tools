@@ -10,6 +10,7 @@ from scipy.interpolate import RectBivariateSpline,interp1d
 import os,glob
 
 import matplotlib
+from functools import reduce
 matplotlib.use("Agg")
 from matplotlib import pylab as p
 
@@ -276,7 +277,7 @@ class absorption:
 
     def read(self):
     # which one??
-        self.e,self.mur,self.muer=map(array,zip(*[map(float,(lambda x:x[-3:] if len(x)>3 else x)(l.split()))  for l in open(os.environ['EDDOSA_TOOLS_DIR']+"/lut2model/python/resources/CdTe_abs.txt").readlines()[10:]]))
+        self.e,self.mur,self.muer=list(map(array,list(zip(*[list(map(float,(lambda x:x[-3:] if len(x)>3 else x)(l.split())))  for l in open(os.environ['EDDOSA_TOOLS_DIR']+"/lut2model/python/resources/CdTe_abs.txt").readlines()[10:]]))))
         ktr=50/1000.
         self.muer[self.e<ktr]=(self.e/ktr)[self.e<ktr]**(-2)*self.muer[self.e>=ktr][0]
         self.mur[self.e<ktr]=(self.e/ktr)[self.e<ktr]**(-2)*self.mur[self.e>=ktr][0]
@@ -442,12 +443,12 @@ def get_resol(energy,rt):
 
 def produce_perenergy(i,j):
     for energy in logspace(log10(20),3,500)[i*j:i*j+j]:
-        print "energy:",energy
-        print "make monoenergetic bipar"
+        print("energy:",energy)
+        print("make monoenergetic bipar")
         x,rt_bip,q_bip,intensity=detector().get_mono_energy_bipar(energy)
-        print "apply resolution"
+        print("apply resolution")
         #bip=get_resolutions(energy,rt_bip,q_bip,intensity)
-        print "saving"
+        print("saving")
 
         #save("run/model_bipars/bipar_energy_%.5lg.npy"%energy,bip)
 
@@ -467,14 +468,14 @@ def produce_one_energy(energy):
             
         start= time.clock()
         bip=get_resolutions(energy,rt_bip,q_bip,intensity)
-        print "done in",time.clock()-start,"seconds"
+        print("done in",time.clock()-start,"seconds")
 
         p.clf()
         p.contourf(log10(bip[:200,:100]).transpose(),levels=linspace(-10,1,100))
         p.colorbar()
         plot("bip.png")
     
-    sigmas=zip(*[get_sigmas(energy,rt) for rt in rt_bip])
+    sigmas=list(zip(*[get_sigmas(energy,rt) for rt in rt_bip]))
     p.clf()
     p.scatter(q_bip,sigmas[0],lw=0)
     p.scatter(q_bip,sigmas[1],lw=0,color="red")
@@ -493,12 +494,12 @@ def produce_one_energy(energy):
 
 def for_spectrum(energy,flux):
     for _energy in zip(energy,flux):
-        print "energy:",_energy
-        print "make monoenergetic bipar"
+        print("energy:",_energy)
+        print("make monoenergetic bipar")
         x,rt_bip,q_bip,intensity=detector().get_mono_energy_bipar(_energy)
-        print "apply resolution"
+        print("apply resolution")
         #bip=get_resolutions(energy,rt_bip,q_bip,intensity)
-        print "saving"
+        print("saving")
 
         #save("run/model_bipars/bipar_energy_%.5lg.npy"%energy,bip)
 
@@ -520,7 +521,7 @@ def get_peak(det,energy):
     
 #        p.scatter(q_bip,rt_bip,c=intensity,lw=0)
 
-    print "energy",energy,'q',q_bip[rt_bip.argmin()]
+    print("energy",energy,'q',q_bip[rt_bip.argmin()])
     return q_bip[rt_bip.argmin()]
 
 def get_go(det):
@@ -537,7 +538,7 @@ def get_go(det):
         #plot("x_q.png")
         
 #        p.scatter(q_bip,rt_bip,c=intensity,lw=0)
-        print "energy",energy,'q',q_bip[rt_bip.argmin()]
+        print("energy",energy,'q',q_bip[rt_bip.argmin()])
         
         positions.append(q_bip[rt_bip.argmin()])
 
@@ -564,7 +565,7 @@ def get_chan(det,energies=[57.981,150,511],render_model="default"):
         av=(bip_projection*arange(2048)).sum()/bip_projection.sum()
         
 #        p.scatter(q_bip,rt_bip,c=intensity,lw=0)
-        print "energy",energy,'q',q_bip[rt_bip.argmin()],av
+        print("energy",energy,'q',q_bip[rt_bip.argmin()],av)
             
 
  #       print "energy",energy,'q',q_bip[rt_bip.argmin()]
@@ -589,7 +590,7 @@ def plot_parameter_sensitivity():
 
         for i,det in enumerate(detectors):
 
-            print i,len(detectors)
+            print(i,len(detectors))
 
             gos.append(get_go(det))
 
@@ -617,7 +618,7 @@ def plot_parameter_sensitivity():
             #plot("bip.png")
             ps.append(pf(det))
 
-            print pf(det),o,g
+            print(pf(det),o,g)
 
         p.clf()
         p.plot(ps,zip(*gos)[0]/average(zip(*gos)[0]))
@@ -655,7 +656,7 @@ def plot_parameter_sensitivity():
 
             g,o=get_go(dr)
 
-            print ia,ib,a,b,g,o
+            print(ia,ib,a,b,g,o)
 
             g_map_e[ia,ib]=g
 
@@ -719,8 +720,8 @@ def plot_parameter_sensitivity():
 def estimate_parameters(offset,gain):
     from scipy.optimize import minimize
 
-    print "requested gain:",gain
-    print "default gain:",get_go(detector())[1]
+    print("requested gain:",gain)
+    print("default gain:",get_go(detector())[1])
 
     def f(d_tau_e):
         d=detector()
@@ -731,7 +732,7 @@ def estimate_parameters(offset,gain):
 
     r=minimize(f,1,method='nelder-mead',options={'xtol': 1e-8, 'disp': True})
 
-    print "tau_e change",r.x
+    print("tau_e change",r.x)
 
     d=detector()
     d.offset=offset
@@ -739,11 +740,11 @@ def estimate_parameters(offset,gain):
     d.tau_t*=1. # controls the angle
     
     o,g=get_go(d)
-    print "fitted gain, offset",g,o
+    print("fitted gain, offset",g,o)
         
     d.offset=o
     o,g=get_go(d)
-    print "final gain, offset",g,o
+    print("final gain, offset",g,o)
     return d
 
 def estimate_parameters_from_peaks(peak1,peak2):
@@ -755,10 +756,11 @@ def estimate_parameters_from_peaks(peak1,peak2):
     d_default=detector()
     d_default.tau_t*=1
     d_default.mu_t*=0.5
-    print "requested peaks:",peak1,peak2
-    print "default peaks:",get_peak(d_default,eline1),get_peak(d_default,eline2)
+    print("requested peaks:",peak1,peak2)
+    print("default peaks:",get_peak(d_default,eline1),get_peak(d_default,eline2))
 
-    def f((d_tau_e,offset)):
+    def f(xxx_todo_changeme):
+        (d_tau_e,offset) = xxx_todo_changeme
         d=detector()
         d.import_detector(d_default.export_detector())
         d.offset=offset
@@ -767,7 +769,7 @@ def estimate_parameters_from_peaks(peak1,peak2):
 
     r=minimize(f,[1,0],method='nelder-mead',options={'xtol': 1e-8, 'disp': True})
 
-    print "tau_e change",r.x
+    print("tau_e change",r.x)
 
     d=detector()
     d.import_detector(d_default.export_detector())
@@ -775,7 +777,7 @@ def estimate_parameters_from_peaks(peak1,peak2):
     d.offset=r.x[1]
     
     o,g=get_go(d)
-    print "fitted gain, offset",g,o
+    print("fitted gain, offset",g,o)
         
     return d
 
@@ -783,7 +785,7 @@ def make_bipar_monoenergetic(detector_model,energy,resolutionfactor=1.,resolutio
     x,rt_bip,q_bip,intensity=detector_model.get_mono_energy_bipar(energy)  
 
     if resolutionfactor==1.:
-        sigmas=zip(*[get_sigmas(energy,rt,q) for rt,q in zip(rt_bip,q_bip)])
+        sigmas=list(zip(*[get_sigmas(energy,rt,q) for rt,q in zip(rt_bip,q_bip)]))
     else:
         sigmas=[array(x)/resolutionfactor for x in zip(*[get_sigmas(energy,rt,q) for rt,q in zip(rt_bip,q_bip)])]
         
@@ -827,7 +829,7 @@ class response3d:
     def loadfrom(self,fn):
         f=pyfits.open(fn)
         self.response=f[0].data
-        print "loading 3d response from",fn,"sum",self.response.sum()
+        print("loading 3d response from",fn,"sum",self.response.sum())
         self.energies=f[1].data['ENERGY']
         self.response_energies=f[2].data['ENERGY']
         self.grouping=f[1].header['grouping']
@@ -842,25 +844,25 @@ class response3d:
         energy_group=[energies[1]]
         energy_groups=[[energies[0]]]
 
-        print "total energies:",len(energies)
+        print("total energies:",len(energies))
         ie=0
         ieg=0
         for energy in energies[2:]:
-            print "energy",ie,energy,
+            print("energy",ie,energy, end=' ')
             if energy < energy_group[0]*(self.grouping+1):
                 energy_group.append(energy)
                 ie+=1
             else:
                 energy_groups.append(energy_group)
-                print "group filled",energy_group,len(energy_group),ieg
+                print("group filled",energy_group,len(energy_group),ieg)
                 energy_group=[energy]
                 ie+=1
                 ieg+=1
-            print "group",ieg
-            print "total in groups:",sum([len(g) for g in energy_groups])+len(energy_group)
+            print("group",ieg)
+            print("total in groups:",sum([len(g) for g in energy_groups])+len(energy_group))
         energy_groups.append(energy_group)
 
-        print "total in groups:",sum([len(g) for g in energy_groups])
+        print("total in groups:",sum([len(g) for g in energy_groups]))
 
         self.energy_groups=energy_groups
 
@@ -872,7 +874,7 @@ class response3d:
         ie_stop=0
         ieg=0
         if energy<self.energy_groups[1][0]:
-            print "energy is below minimal",self.energy_groups[1][0]
+            print("energy is below minimal",self.energy_groups[1][0])
             return 1
             
         for energy_group in self.energy_groups:
@@ -886,8 +888,8 @@ class response3d:
             ie_stop+=len(energy_group)
             ieg+=1
         if ieg>=len(self.energy_groups):
-            print "energy not found in groups",energy
-            print "energy is above maximal",self.energy_groups[-1][-1]
+            print("energy not found in groups",energy)
+            print("energy is above maximal",self.energy_groups[-1][-1])
             return 
         return ieg
 
@@ -898,14 +900,14 @@ class response3d:
             return
 
         if not silent:
-            print "get energy",energy,"in group",ieg,self.energy_groups[ieg][0],self.energy_groups[ieg][-1]
-            print "response:",self.response[ieg-1].sum(),self.response[ieg].sum(),self.response.sum(),self.response.sum()
+            print("get energy",energy,"in group",ieg,self.energy_groups[ieg][0],self.energy_groups[ieg][-1])
+            print("response:",self.response[ieg-1].sum(),self.response[ieg].sum(),self.response.sum(),self.response.sum())
         
 
         energy1=self.energy_groups[ieg-1][-1]
         energy2=self.energy_groups[ieg][-1]
         if energy>30 and energy2-energy1>energy2*0.02 and not disable_ai: 
-            print "advanced interpolation"
+            print("advanced interpolation")
             pha=arange(2048)
             rt=arange(256)
 
@@ -925,7 +927,7 @@ class response3d:
                 pyfits.PrimaryHDU(r2).writeto("r2.fits",clobber=True)
                 pyfits.PrimaryHDU(r2).writeto("r.fits",clobber=True)
         else:
-            print "simple interpolation"
+            print("simple interpolation")
             return self.response[ieg-1]  + (self.response[ieg] - self.response[ieg-1]) * (energy-self.energy_groups[ieg-1][-1])/(self.energy_groups[ieg][-1]-self.energy_groups[ieg-1][-1])
         return r
     
@@ -961,7 +963,7 @@ class response3d:
 
 def generate_bipar(detector_model,energy,render_model="m0",resolution_step=1):
     x,rt_bip,q_bip,intensity=detector_model.get_mono_energy_bipar(energy)  
-    sigmas=zip(*[get_sigmas(energy,rt,q) for rt,q in zip(rt_bip,q_bip)])
+    sigmas=list(zip(*[get_sigmas(energy,rt,q) for rt,q in zip(rt_bip,q_bip)]))
 
     config=zeros_like(rt_bip)
     config[0]=resolution_step # step
@@ -999,7 +1001,7 @@ def make_lut2_v3(detector_model=None,resolution_step=1,nenergies=401,logenergies
     bips=[]
     
     for energy,denergy in zip(energies,denergies)[::resolution_step]:
-        print "energy",energy
+        print("energy",energy)
         de=0.1*energy/60.
         weight=source_model(energy)
 
@@ -1026,7 +1028,7 @@ def make_lut2_v3(detector_model=None,resolution_step=1,nenergies=401,logenergies
             rt_profile.append([av_ph,gain])
 
             if isnan(source_model(energy)):
-                print "skipping",energy,source_model(energy)
+                print("skipping",energy,source_model(energy))
                 continue
             
 
@@ -1037,7 +1039,7 @@ def make_lut2_v3(detector_model=None,resolution_step=1,nenergies=401,logenergies
             bin_energy=energy+(energies[si_ph]*2-av_ph)/gain
 
             
-            print "profile",energy,bin_energy,weight,av_ph,gain,si_ph
+            print("profile",energy,bin_energy,weight,av_ph,gain,si_ph)
             
             bip_energy[si_ph,rt]+=bin_energy*weight
             bip_gain[si_ph,rt]+=gain*weight
@@ -1111,16 +1113,16 @@ def make_lut2_simple_faster(writelut23d=True,detector_model=None,write3dresp=Tru
     for energy_group in r3d.energy_groups:
     #for ie,energy in enumerate(zip(energies[:-1],energies[1:])):
 
-        print "energy group",energy_group[0],"-",energy_group[-1],len(energy_group)
+        print("energy group",energy_group[0],"-",energy_group[-1],len(energy_group))
 
-        print "generating for",energy_group[-1]
+        print("generating for",energy_group[-1])
 
         bip,rt_bip,q_bip,intensity=generate_bipar(detector_model,energy_group[-1],render_model)
 
         r3d.set_energy(energy_group[-1],bip.astype(float32))
     
         for energy in energy_group:
-            print ie,"/",len(energies),ieg,"/",len(r3d.energy_groups),"energy",energy,"interpolating"
+            print(ie,"/",len(energies),ieg,"/",len(r3d.energy_groups),"energy",energy,"interpolating")
             
             bip=r3d.get_energy(energy)
 
@@ -1139,14 +1141,14 @@ def make_lut2_simple_faster(writelut23d=True,detector_model=None,write3dresp=Tru
 
 
             if isnan(source_model(energy)):
-                print "skipping",energy,source_model(energy)
+                print("skipping",energy,source_model(energy))
                 continue
             
-            print "filling",energy,source_model(energy)
+            print("filling",energy,source_model(energy))
             bip_tot+=bip*energy*source_model(energy)
             bip_model+=bip*source_model(energy)
             bip_tot2+=(bip*energy)**2
-            print "average bipar:",average(bip)
+            print("average bipar:",average(bip))
             ie+=1
         ieg+=1
 
@@ -1186,7 +1188,7 @@ def make_lut2_simple_faster(writelut23d=True,detector_model=None,write3dresp=Tru
     #pyfits.HDUList([imghdu, tbhdu]).writeto("lut2_1d.fits",clobber=True)
     
     if writelut23d:
-        print "will generate LUT2 3D"
+        print("will generate LUT2 3D")
             
         model_bipar=r3d.get_bipar_for_model(source_model)
 
@@ -1198,7 +1200,7 @@ def make_lut2_simple_faster(writelut23d=True,detector_model=None,write3dresp=Tru
         lut23d_n=zeros((2048,256))
 
         for energy in r3d.energies:
-            print "energy:",energy
+            print("energy:",energy)
             bip=r3d.get_energy(energy)
             bip_n=bip/model_bipar*500 # number of 
 
@@ -1232,18 +1234,18 @@ def make_lut2_simple_faster(writelut23d=True,detector_model=None,write3dresp=Tru
                 #print xk[mask],pk[mask]
 
                 if xk[mask].shape[0]==0:
-                    print pha,rt,"only nan"
+                    print(pha,rt,"only nan")
                     continue
     #
                 start= time.clock()
-                a=rv_discrete(name="a",values=(range(len(xk[mask])),pk[mask]))
+                a=rv_discrete(name="a",values=(list(range(len(xk[mask]))),pk[mask]))
                 lut23d[pha,rt]=xk[mask][a.rvs(size=space3d)]
                 spent_in_sampling+=time.clock()-start
 
                 if rt==30:
-                    print "sampling spent",spent_in_sampling,"seconds"
+                    print("sampling spent",spent_in_sampling,"seconds")
                     spent_in_sampling=0
-                    print pha,rt,"energies",average(lut23d[pha,rt]),median(lut23d[pha,rt]),var(lut23d[pha,rt])**0.5
+                    print(pha,rt,"energies",average(lut23d[pha,rt]),median(lut23d[pha,rt]),var(lut23d[pha,rt])**0.5)
             
         fd=pyfits.open(os.environ['CURRENT_IC']+"/ic/ibis/mod/isgr_3dl2_mod_0001.fits")
         for i in range(500):
@@ -1282,7 +1284,7 @@ def response_response(lut2=None,r3d=None,energies=None,savefits=False,limitrt=No
     lut2=lut2.astype(float64)
     #response=response.astype(float64)
 
-    print lut2.shape
+    print(lut2.shape)
 
     tag=""
 
@@ -1309,7 +1311,7 @@ def response_response(lut2=None,r3d=None,energies=None,savefits=False,limitrt=No
             tags.append("_%.3lg"%lrt)
 
 
-    print "all tags:",tags
+    print("all tags:",tags)
 
     i=0
     bin_edges=arange(2049)*0.5 #linspace(0,2048,nenergies)
@@ -1319,11 +1321,11 @@ def response_response(lut2=None,r3d=None,energies=None,savefits=False,limitrt=No
 
         if e_r is None: continue
             
-        print i,e_r.shape
+        print(i,e_r.shape)
         i+=2
 
         for i,lut2 in enumerate(lut2_s):
-            print "lut2...",i
+            print("lut2...",i)
             mask=logical_and(~isnan(lut2),~isnan(e_r))
             mask=logical_and(mask,logical_and(~isinf(lut2),~isinf(e_r)))
             mask=logical_and(mask,e_r>0)
@@ -1382,7 +1384,7 @@ def make_lut2_simple():
     bip_tot2=bip_tot*0
     for fn in glob.glob("bipar_energy_*"):
         en=float(fn.replace("bipar_energy_","").replace(".npy",""))
-        print en
+        print(en)
         bip=load(fn)
         bip[bip<average(bip)]=0
         bip[bip>0]=1
@@ -1395,7 +1397,7 @@ def make_lut2_simple():
     bip_tot=reduce(lambda x,y:x+y,[load(fn) for fn in glob.glob(perenergyroot+"/bipar_energy_*")])
     for fn in glob.glob("bipar_energy_*"):
         en=float(fn.replace("bipar_energy_","").replace(".npy",""))
-        print en
+        print(en)
         bip=load(fn)
         bip[bip<average(bip)]=0
         bip[bip>0]=1
@@ -1410,9 +1412,9 @@ def make_lut2_1d():
     bip_n=bip_tot*0
     bip_tot2=bip_tot*0
     for fn in glob.glob(perenergyroot+"/bipar_energy_*"):
-        print "fn",fn
+        print("fn",fn)
         en=float(fn.split("/")[-1].replace("bipar_energy_","").replace(".npy",""))
-        print en
+        print(en)
         bip=load(fn)
         bip_tot+=bip*en
         bip_n+=bip
